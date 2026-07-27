@@ -1,0 +1,14 @@
+[package]
+name = "shake-entropy"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "A cryptographic hybrid TRNG entropy generator combining CPU intrinsics (RDRAND/RDSEED) and OS entropy with SHAKE256 conditioning."
+repository = "https://github.com/herabel/shake-entropy"
+keywords = ["entropy", "rng", "trng", "rdrand", "crypto"]
+
+[dependencies]
+getrandom = "0.4.3"
+rand_core = { version = "0.10", default-features = false }
+rand_core_06 = { package = "rand_core", version = "0.6" }
+tiny-keccak = { version = "2.0.2", features = ["shake"] }
