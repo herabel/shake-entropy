@@ -5,7 +5,7 @@ pub fn gen_rdseed(loop_amount: u16) -> Option<u64> {
         if attempt.is_some() {
             return attempt;
         }
-        std::hint::spin_loop();
+        core::hint::spin_loop();
     }
     None
 }
@@ -17,7 +17,7 @@ pub fn gen_rdrand(loop_amount: u16) -> Option<u64> {
         if attempt.is_some() {
             return attempt;
         }
-        std::hint::spin_loop();
+        core::hint::spin_loop();
     }
     None
 }
@@ -27,10 +27,11 @@ pub fn gen_rdrand(loop_amount: u16) -> Option<u64> {
 /// Returns `None` if the operation status is 0 or the feature is unsupported by the CPU.
 #[cfg(target_arch = "x86_64")]
 pub fn try_rdseed() -> Option<u64> {
+    #[cfg(feature = "std")]
     if is_x86_feature_detected!("rdseed") {
         unsafe {
             let mut val: u64 = 0;
-            let status: i32 = std::arch::x86_64::_rdseed64_step(&mut val);
+            let status: i32 = core::arch::x86_64::_rdseed64_step(&mut val);
             if status == 1 {
                 Some(val)
             } else {
@@ -40,17 +41,31 @@ pub fn try_rdseed() -> Option<u64> {
     } else {
         None
     }
+
+    // RDSEED fallback for no_std
+    #[cfg(not(feature = "std"))]
+    {
+        unsafe {
+            let mut val: u64 = 0;
+            if core::arch::x86_64::_rdseed64_step(&mut val) == 1 {
+                Some(val)
+            } else {
+                None
+            }
+    }}
 }
 
 /// Queries the hardware `RDRAND` processor register.
 ///
 /// Returns `None` if the operation status is 0 or the feature is unsupported by the CPU.
 #[cfg(target_arch = "x86_64")]
+
 pub fn try_rdrand() -> Option<u64> {
+    #[cfg(feature = "std")]
     if is_x86_feature_detected!("rdrand") {
         unsafe {
             let mut val: u64 = 0;
-            let status: i32 = std::arch::x86_64::_rdrand64_step(&mut val);
+            let status: i32 = core::arch::x86_64::_rdrand64_step(&mut val);
             if status == 1 {
                 Some(val)
             } else {
@@ -59,6 +74,19 @@ pub fn try_rdrand() -> Option<u64> {
         }
     } else {
         None
+    }
+
+    // RDRAND fallback for no_std
+    #[cfg(not(feature = "std"))]
+    {
+        unsafe {
+            let mut val: u64 = 0;
+            if core::arch::x86_64::_rdrand64_step(&mut val) == 1 {
+                Some(val)
+            } else {
+                None
+            }
+        }
     }
 }
 
