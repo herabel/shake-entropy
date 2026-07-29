@@ -11,7 +11,7 @@
 //! Uses direct CPU instructions. Ensure the target architecture supports
 //! the necessary features (`rdrand`, `rdseed` via [`cpu_entropy`]) before deployment.
 
-const RESEED_THRESHOLD: usize = 10*1024;
+const RESEED_THRESHOLD: usize = 1024*1024;
 
 use getrandom;
 use rand_core::{TryRng};
