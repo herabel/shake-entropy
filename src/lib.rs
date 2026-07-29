@@ -24,4 +24,21 @@ mod tests {
         entropy_pool.fill_bytes(&mut bytes);
         assert_eq!(bytes.iter().any(|&b| b != 0), true);
     }
+    #[test]
+    fn bench_speed() {
+        use std::time::Instant;
+        let mut buf = vec![0u8; 10_000_000]; // 10 mb
+        let start = Instant::now();
+        crate::entropy::HardwareEntropyPool::new();
+        let duration_init = start.elapsed();
+        let start_gen = Instant::now();
+        crate::entropy::fill_random_bytes(&mut buf);
+        let duration_gen = start_gen.elapsed();
+        let speed_mb_s = 10.0 / duration_gen.as_secs_f64();
+        println!("\n=== SPEED BENCHMARK ===");
+        println!("Pool Initialization time: {:?}", duration_init);
+        println!("Generated 10 MB in: {:?}", duration_gen);
+        println!("Throughput: {:.2} MB/s", speed_mb_s);
+        println!("========================\n");
+    }
 }
