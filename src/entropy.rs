@@ -4,7 +4,6 @@
 //! backed by [`cpu_entropy`].
 //! 
 //! ### Traits
-//! - Implements [rand_core::RngCore](https://docs.rs/rand_core/0.6.4/rand_core/trait.RngCore.html) (v0.6) for standard sampling.
 //! - Implements [rand_core::TryRng](https://docs.rs/rand_core/0.10/rand_core/trait.TryRng.html) (v0.10) for fallible entropy retrieval.
 //! 
 //! ### Security note
@@ -30,6 +29,7 @@ impl Default for HardwareEntropyPool {
     }
 }
 
+/// A pool compatible with [rand_core::Rng](https://docs.rs/rand_core/0.10/rand_core/trait.Rng.html), [rand_core::CryptoRng](https://docs.rs/rand_core/0.10/rand_core/trait.CryptoRng.html).
 impl HardwareEntropyPool {
     pub fn try_new() -> Result<HardwareEntropyPool, getrandom::Error> {
 
