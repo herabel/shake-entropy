@@ -12,7 +12,7 @@
 //! the necessary features (`rdrand`, `rdseed` via [`cpu_entropy`]) before deployment.
 
 use getrandom;
-use rand_core::TryRng;
+use rand_core::{TryRng};
 use tiny_keccak::{Hasher, Shake, Xof};
 use crate::cpu_entropy;
 use rand_core_06::{self};
@@ -36,16 +36,14 @@ impl HardwareEntropyPool {
         let mut os_buf = [0u8; 64];
         getrandom::fill(&mut os_buf)?;
 
-        let hard_random_number_rdrand = cpu_entropy::gen_rdrand(50).unwrap_or(0);
-        if hard_random_number_rdrand != 0 {
+        if let Some(hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
             hasher.update(&hard_random_number_rdrand.to_le_bytes());
         }
         
 
-        let hard_random_number_rdseed = cpu_entropy::gen_rdseed(50).unwrap_or(0);
-        if hard_random_number_rdseed != 0 {
+        if let Some(hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
             hasher.update(&hard_random_number_rdseed.to_le_bytes());
-        }
+        };
 
         hasher.update(&os_buf);
 
@@ -104,7 +102,6 @@ impl rand_core::TryRng for HardwareEntropyPool{
 }
 
 impl rand_core::TryCryptoRng for HardwareEntropyPool {}
-impl rand_core_06::CryptoRng for HardwareEntropyPool {}
 
 /// Generates a vector of bytes with provided size
 pub fn generate_random_bytes(size: usize) -> Vec<u8> {
