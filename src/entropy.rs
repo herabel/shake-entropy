@@ -57,26 +57,6 @@ impl HardwareEntropyPool {
     }
 }
 
-impl rand_core_06::RngCore for HardwareEntropyPool {
-    /// Generates an u32 byte
-    fn next_u32(&mut self) -> u32 {
-        self.try_next_u32().unwrap()
-    }
-    /// Generates an u64 byte
-    fn next_u64(&mut self) -> u64 {
-        self.try_next_u64().unwrap()
-    }
-    /// Fills destination with u8 slice
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        let _ = rand_core::TryRng::try_fill_bytes(self, dest);
-    }
-    /// An attempt to fill destination with u8 slice
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core_06::Error> {
-        self.fill_bytes(dest);
-        Ok(())
-    }
-}
-
 impl rand_core::TryRng for HardwareEntropyPool{
     type Error = core::convert::Infallible;
 
