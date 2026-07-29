@@ -51,6 +51,7 @@ mod tests {
         println!("Pool Initialization time: {:?}", duration_init);
         println!("Generated 10 MB in: {:?}", duration_gen);
         println!("Throughput: {:.2} MB/s", speed_mb_s);
+        println!("Elapsed reseed: {:?}", elapsed_reseed);
         println!("========================\n");
     }
 }
