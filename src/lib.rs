@@ -1,3 +1,5 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
 pub mod cpu_entropy;
 pub mod entropy;
 
@@ -5,8 +7,10 @@ pub use entropy::{fill_random_bytes, HardwareEntropyPool};
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "std")]
     use rand_core::{Rng, TryRng};
     use crate::entropy::fill_random_bytes;
+    #[cfg(feature = "std")]
     use super::*;
 
     #[test]
@@ -18,6 +22,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn test_hardware_entropy_pool() {
         let mut entropy_pool = HardwareEntropyPool::new();
         let mut bytes = vec![0u8; 64];
@@ -26,6 +31,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn test_pool_reseed() {
         let mut entropy_pool = HardwareEntropyPool::new();
         entropy_pool.reseed().unwrap();
@@ -34,6 +40,7 @@ mod tests {
         assert_eq!(bytes.iter().any(|&b| b != 0), true);
     }
     #[test]
+    #[cfg(feature = "std")]
     fn bench_speed() {
         use std::time::Instant;
         let mut buf = vec![0u8; 10_000_000]; // 10 mb
