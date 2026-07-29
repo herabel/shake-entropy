@@ -34,6 +34,7 @@ impl HardwareEntropyPool {
     pub fn try_new() -> Result<HardwareEntropyPool, getrandom::Error> {
 
         let mut hasher= Shake::v256();
+        hasher.update(b"shake-entropy-v0.1-domain-separator");
 
         let mut os_buf = [0u8; 64];
         getrandom::fill(&mut os_buf)?;
