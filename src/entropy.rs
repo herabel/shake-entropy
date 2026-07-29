@@ -11,6 +11,8 @@
 //! Uses direct CPU instructions. Ensure the target architecture supports
 //! the necessary features (`rdrand`, `rdseed` via [`cpu_entropy`]) before deployment.
 
+const RESEED_THRESHOLD: usize = 10*1024;
+
 use getrandom;
 use rand_core::{TryRng};
 use tiny_keccak::{Hasher, Shake, Xof};
@@ -55,6 +57,36 @@ impl HardwareEntropyPool {
     pub fn new() -> Self {
         Self::try_new().expect("Failed to initialize OS entropy source")
     }
+
+    pub fn reseed(&mut self) -> Result<(), getrandom::Error> {
+        let mut new_hasher = Shake::v256();
+
+        let mut old_seed = [0u8; 32];
+        self.state.squeeze(&mut old_seed);
+        new_hasher.update(&old_seed);
+        old_seed.zeroize();
+
+        let mut os_buf = [0u8; 64];
+        getrandom::fill(&mut os_buf)?;
+
+        if let Some(hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
+            new_hasher.update(&hard_random_number_rdrand.to_le_bytes());
+        }
+
+
+        if let Some(hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
+            new_hasher.update(&hard_random_number_rdseed.to_le_bytes());
+        };
+
+        new_hasher.update(&os_buf);
+
+        os_buf.zeroize();
+
+        self.state = new_hasher;
+        self.counter = 0;
+
+        Ok(())
+    }
 }
 
 impl rand_core::TryRng for HardwareEntropyPool{
@@ -79,6 +111,9 @@ impl rand_core::TryRng for HardwareEntropyPool{
 
     /// An attempt to fill destination with u8 slice
     fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
+        if self.counter > RESEED_THRESHOLD {
+            let _ = self.reseed();
+        };
         self.state.squeeze(dst);
         self.counter += dst.len();
         Ok(())
