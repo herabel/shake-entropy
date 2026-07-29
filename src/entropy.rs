@@ -15,7 +15,7 @@ use getrandom;
 use rand_core::{TryRng};
 use tiny_keccak::{Hasher, Shake, Xof};
 use crate::cpu_entropy;
-use rand_core_06::{self};
+use zeroize::Zeroize;
 
 pub struct HardwareEntropyPool{
     state: tiny_keccak::Shake,
@@ -46,6 +46,8 @@ impl HardwareEntropyPool {
         };
 
         hasher.update(&os_buf);
+
+        os_buf.zeroize();
 
         Ok ( Self { state: (hasher), counter: (0) } )
     }
@@ -83,6 +85,7 @@ impl rand_core::TryRng for HardwareEntropyPool{
         let mut local_array = [0u8;4];
         let _ = rand_core::TryRng::try_fill_bytes(self, &mut local_array);
         let output = u32::from_le_bytes(local_array);
+        local_array.zeroize();
         Ok(output)
     }
     /// An attempt to create next u64
@@ -90,6 +93,7 @@ impl rand_core::TryRng for HardwareEntropyPool{
         let mut local_array = [0u8;8];
         let _ = rand_core::TryRng::try_fill_bytes(self, &mut local_array);
         let output = u64::from_le_bytes(local_array);
+        local_array.zeroize();
         Ok(output)
     }
 
