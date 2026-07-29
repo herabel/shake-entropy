@@ -14,7 +14,8 @@ shake-entropy = "0.1.2"
 use shake_entropy::generate_random_bytes;
 fn main() {
     // Generate 64 bytes of cryptographically secure random entropy
-    let random_key = generate_random_bytes(64);
+    let mut some_bytes = [0u8; 64];
+    let random_key = fill_random_bytes(&mut some_bytes);
     println!("Generated key: {:?}", random_key);
 }
 ```
