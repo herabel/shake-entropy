@@ -5,7 +5,7 @@ pub use entropy::{fill_random_bytes, HardwareEntropyPool};
 
 #[cfg(test)]
 mod tests {
-    use rand_core::Rng;
+    use rand_core::{Rng, TryRng};
     use crate::entropy::fill_random_bytes;
     use super::*;
 
@@ -24,17 +24,29 @@ mod tests {
         entropy_pool.fill_bytes(&mut bytes);
         assert_eq!(bytes.iter().any(|&b| b != 0), true);
     }
+
+    #[test]
+    fn test_pool_reseed() {
+        let mut entropy_pool = HardwareEntropyPool::new();
+        entropy_pool.reseed().unwrap();
+        let mut bytes = vec![0u8; 64];
+        entropy_pool.fill_bytes(&mut bytes);
+        assert_eq!(bytes.iter().any(|&b| b != 0), true);
+    }
     #[test]
     fn bench_speed() {
         use std::time::Instant;
         let mut buf = vec![0u8; 10_000_000]; // 10 mb
         let start = Instant::now();
-        crate::entropy::HardwareEntropyPool::new();
+        let mut pool = crate::entropy::HardwareEntropyPool::new();
         let duration_init = start.elapsed();
         let start_gen = Instant::now();
-        crate::entropy::fill_random_bytes(&mut buf);
+        let _ = pool.try_fill_bytes(&mut buf);
         let duration_gen = start_gen.elapsed();
         let speed_mb_s = 10.0 / duration_gen.as_secs_f64();
+        let start_reseed = Instant::now();
+        pool.reseed().unwrap();
+        let elapsed_reseed = start_reseed.elapsed();
         println!("\n=== SPEED BENCHMARK ===");
         println!("Pool Initialization time: {:?}", duration_init);
         println!("Generated 10 MB in: {:?}", duration_gen);
