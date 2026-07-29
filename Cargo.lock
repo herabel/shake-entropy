@@ -45,7 +45,7 @@ checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 
 [[package]]
 name = "shake-entropy"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "getrandom",
  "rand_core",
