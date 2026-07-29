@@ -1,5 +1,3 @@
-#![cfg(target_arch = "x86_64")]
-
 /// Loops to gather entropy from [`try_rdseed`]. Returns `None` if the attempt is blank.
 pub fn gen_rdseed(loop_amount: u16) -> Option<u64> {
     for _ in 0..loop_amount {
@@ -27,6 +25,7 @@ pub fn gen_rdrand(loop_amount: u16) -> Option<u64> {
 /// Queries the hardware `RDSEED` processor register.
 ///
 /// Returns `None` if the operation status is 0 or the feature is unsupported by the CPU.
+#[cfg(target_arch = "x86_64")]
 pub fn try_rdseed() -> Option<u64> {
     if is_x86_feature_detected!("rdseed") {
         unsafe {
@@ -46,6 +45,7 @@ pub fn try_rdseed() -> Option<u64> {
 /// Queries the hardware `RDRAND` processor register.
 ///
 /// Returns `None` if the operation status is 0 or the feature is unsupported by the CPU.
+#[cfg(target_arch = "x86_64")]
 pub fn try_rdrand() -> Option<u64> {
     if is_x86_feature_detected!("rdrand") {
         unsafe {
@@ -60,4 +60,15 @@ pub fn try_rdrand() -> Option<u64> {
     } else {
         None
     }
+}
+
+/// A `try_rdseed` fallback for non x86_64 arch
+#[cfg(not(target_arch = "x86_64"))]
+pub fn try_rdseed() -> Option<u64> {
+    None
+}
+/// A `try_rdrand` fallback for non x86_64 arch
+#[cfg(not(target_arch = "x86_64"))]
+pub fn try_rdrand() -> Option<u64> {
+    None
 }
