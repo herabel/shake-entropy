@@ -103,10 +103,8 @@ impl rand_core::TryRng for HardwareEntropyPool{
 
 impl rand_core::TryCryptoRng for HardwareEntropyPool {}
 
-/// Generates a vector of bytes with provided size
-pub fn generate_random_bytes(size: usize) -> Vec<u8> {
+/// Fills a destination with bytes
+pub fn fill_random_bytes(dest: &mut [u8]) {
     let mut pool = HardwareEntropyPool::new();
-    let mut vec = vec![0u8; size];
-    HardwareEntropyPool::try_fill_bytes(&mut pool, &mut vec);
-    vec
+    let _ = pool.try_fill_bytes(dest);
 }
