@@ -39,10 +39,11 @@ All tests confirm ideal uniform distribution with zero statistical bias.
 ### Performance & Speed Benchmarks
 Evaluated throughput and initialization timing for entropy pool harvesting and continuous sampling.
 
-| Metric | Result | Target / Condition |
-| :--- | :--- | :--- |
-| **Pool Initialization Time** | `39.3 µs` | Physical TRNG seeding (`RDRAND` + `RDSEED` + `OS getrandom`) |
-| **Throughput (10 MB sample)** | **`485.66 MB/s`** | Continuous `SHAKE256` XOF squeezing |
+| Metric                        | Result            | Target / Condition                                           |
+|:------------------------------|:------------------|:-------------------------------------------------------------|
+| **Pool Initialization Time**  | `39.3 µs`         | Physical TRNG seeding (`RDRAND` + `RDSEED` + `OS getrandom`) |
+| **Reseeding Time**            | `22.4 µs`         | Reseeding with state ratcheting & fresh entropy              |
+| **Throughput (10 MB sample)** | **`485.66 MB/s`** | Continuous `SHAKE256` XOF squeezing                          |
 
 
 > **Test Hardware Environment:**
