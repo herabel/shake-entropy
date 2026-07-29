@@ -1,4 +1,8 @@
 # shake-entropy
+
+[![crates.io](https://img.shields.io/crates/v/shake-entropy.svg)](https://crates.io/crates/shake-entropy)
+[![Documentation](https://img.shields.io/docsrs/shake-entropy)](https://docs.rs/shake-entropy)
+
 A cryptographic hybrid TRNG entropy generator combining CPU hardware intrinsics (`RDRAND`/`RDSEED`) and OS kernel entropy with `SHAKE256` conditioning.
 The core design idea is Defense-in-Depth:
 `RDRAND + RDSEED + OS Entropy (getrandom) => SHAKE256`
