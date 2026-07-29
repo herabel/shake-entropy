@@ -11,15 +11,15 @@ Even if 2 out of the 3 entropy sources are compromised, degraded, or malfunction
 Add `shake-entropy` to your `Cargo.toml`:
 ```toml
 [dependencies]
-shake-entropy = "0.1.4"
+shake-entropy = "0.1.5"
 ```
 ### Quick Example
 ```rust
 use shake_entropy::fill_random_bytes;
 fn main() {
     // Generate 64 bytes of cryptographically secure random entropy
-    let mut some_bytes = [0u8; 64];
-    let random_key = fill_random_bytes(&mut some_bytes);
+    let mut random_key = [0u8; 64];
+    fill_random_bytes(&mut random_key);
     println!("Generated key: {:?}", random_key);
 }
 ```
