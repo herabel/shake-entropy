@@ -120,8 +120,12 @@ impl rand_core::TryRng for HardwareEntropyPool{
     /// An attempt to fill destination with u8 slice
     fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
         if self.counter > RESEED_THRESHOLD {
-            let _ = self.reseed();
+            let reseed_success = (0..20).any(|_| self.reseed().is_ok());
+            if !reseed_success {
+                panic!("Fatal error: OS entropy reseed failed after 20 attempts!");
+            };
         };
+
         self.state.squeeze(dst);
         self.counter += dst.len();
         Ok(())
