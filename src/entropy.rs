@@ -39,13 +39,15 @@ impl HardwareEntropyPool {
         let mut os_buf = [0u8; 64];
         getrandom::fill(&mut os_buf)?;
 
-        if let Some(hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
+        if let Some(mut hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
             hasher.update(&hard_random_number_rdrand.to_le_bytes());
+            hard_random_number_rdrand.zeroize();
         }
         
 
-        if let Some(hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
+        if let Some(mut hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
             hasher.update(&hard_random_number_rdseed.to_le_bytes());
+            hard_random_number_rdseed.zeroize();
         };
 
         hasher.update(&os_buf);
@@ -64,19 +66,22 @@ impl HardwareEntropyPool {
 
         let mut old_seed = [0u8; 32];
         self.state.squeeze(&mut old_seed);
+        self.state = Shake::v256();
         new_hasher.update(&old_seed);
         old_seed.zeroize();
 
         let mut os_buf = [0u8; 64];
         getrandom::fill(&mut os_buf)?;
 
-        if let Some(hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
+        if let Some(mut hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
             new_hasher.update(&hard_random_number_rdrand.to_le_bytes());
+            hard_random_number_rdrand.zeroize();
         }
 
 
-        if let Some(hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
+        if let Some(mut hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
             new_hasher.update(&hard_random_number_rdseed.to_le_bytes());
+            hard_random_number_rdseed.zeroize();
         };
 
         new_hasher.update(&os_buf);
