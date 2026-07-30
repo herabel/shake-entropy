@@ -64,6 +64,8 @@ impl HardwareEntropyPool {
     pub fn reseed(&mut self) -> Result<(), getrandom::Error> {
         let mut new_hasher = Shake::v256();
 
+        new_hasher.update(b"shake-entropy-v0.1-domain-separator");
+
         let mut old_seed = [0u8; 32];
         self.state.squeeze(&mut old_seed);
         self.state = Shake::v256();
