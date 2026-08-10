@@ -39,13 +39,15 @@ impl HardwareEntropyPool {
         let mut os_buf = [0u8; 64];
         getrandom::fill(&mut os_buf)?;
 
-        if let Some(hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
+        if let Some(mut hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
             hasher.update(&hard_random_number_rdrand.to_le_bytes());
+            hard_random_number_rdrand.zeroize();
         }
         
 
-        if let Some(hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
+        if let Some(mut hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
             hasher.update(&hard_random_number_rdseed.to_le_bytes());
+            hard_random_number_rdseed.zeroize();
         };
 
         hasher.update(&os_buf);
@@ -62,21 +64,26 @@ impl HardwareEntropyPool {
     pub fn reseed(&mut self) -> Result<(), getrandom::Error> {
         let mut new_hasher = Shake::v256();
 
+        new_hasher.update(b"shake-entropy-v0.1-domain-separator");
+
         let mut old_seed = [0u8; 32];
         self.state.squeeze(&mut old_seed);
+        self.state = Shake::v256();
         new_hasher.update(&old_seed);
         old_seed.zeroize();
 
         let mut os_buf = [0u8; 64];
         getrandom::fill(&mut os_buf)?;
 
-        if let Some(hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
+        if let Some(mut hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
             new_hasher.update(&hard_random_number_rdrand.to_le_bytes());
+            hard_random_number_rdrand.zeroize();
         }
 
 
-        if let Some(hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
+        if let Some(mut hard_random_number_rdseed) = cpu_entropy::gen_rdseed(50){
             new_hasher.update(&hard_random_number_rdseed.to_le_bytes());
+            hard_random_number_rdseed.zeroize();
         };
 
         new_hasher.update(&os_buf);
@@ -113,8 +120,12 @@ impl rand_core::TryRng for HardwareEntropyPool{
     /// An attempt to fill destination with u8 slice
     fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
         if self.counter > RESEED_THRESHOLD {
-            let _ = self.reseed();
+            let reseed_success = (0..20).any(|_| self.reseed().is_ok());
+            if !reseed_success {
+                panic!("Fatal error: OS entropy reseed failed after 20 attempts!");
+            };
         };
+
         self.state.squeeze(dst);
         self.counter += dst.len();
         Ok(())
@@ -125,7 +136,10 @@ impl rand_core::TryCryptoRng for HardwareEntropyPool {}
 
 /// Fills a destination with bytes.
 /// If you need to generate a lot of data use [`HardwareEntropyPool`] instead
-pub fn fill_random_bytes(dest: &mut [u8]) {
+pub fn fill_random_bytes<S>(dest: &mut S)
+where
+    S: ?Sized + AsMut<[u8]>,
+{
     let mut pool = HardwareEntropyPool::new();
-    let _ = pool.try_fill_bytes(dest);
+    let _ = pool.try_fill_bytes(dest.as_mut());
 }
