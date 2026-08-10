@@ -39,8 +39,43 @@ mod tests {
         entropy_pool.fill_bytes(&mut bytes);
         assert_eq!(bytes.iter().any(|&b| b != 0), true);
     }
+
     #[test]
     #[cfg(feature = "std")]
+    fn test_reseed_resets_counter() {
+        let mut pool = HardwareEntropyPool::new();
+        let mut buf = vec![0u8; 500];
+
+        pool.fill_bytes(&mut buf);
+        assert_eq!(pool.counter(), 500);
+        pool.reseed().unwrap();
+
+        assert_eq!(pool.counter(), 0);
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_reseed_changes_crypto_state() {
+        let mut pool1 = HardwareEntropyPool::new();
+        let mut pool2 = pool1.clone();
+
+        let mut dummy = vec![0u8; 500];
+        pool1.fill_bytes(&mut dummy);
+        pool2.fill_bytes(&mut dummy);
+
+        pool1.reseed().unwrap();
+
+        let mut bytes1 = [0u8; 500];
+        let mut bytes2 = [0u8; 500];
+        pool1.fill_bytes(&mut bytes1);
+        pool2.fill_bytes(&mut bytes2);
+
+        assert_ne!(bytes1, bytes2);
+    }
+
+    #[test]
+    #[ignore]
+    // use "cargo test -- --nocapture --ignored" for benchmark
     fn bench_speed() {
         use std::time::Instant;
         let mut buf = vec![0u8; 10_000_000]; // 10 mb
