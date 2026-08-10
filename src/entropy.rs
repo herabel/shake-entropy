@@ -136,7 +136,10 @@ impl rand_core::TryCryptoRng for HardwareEntropyPool {}
 
 /// Fills a destination with bytes.
 /// If you need to generate a lot of data use [`HardwareEntropyPool`] instead
-pub fn fill_random_bytes(dest: &mut [u8]) {
+pub fn fill_random_bytes<S>(dest: &mut S)
+where
+    S: ?Sized + AsMut<[u8]>,
+{
     let mut pool = HardwareEntropyPool::new();
-    let _ = pool.try_fill_bytes(dest);
+    let _ = pool.try_fill_bytes(dest.as_mut());
 }
