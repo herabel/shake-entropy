@@ -13,16 +13,39 @@
 const RESEED_THRESHOLD: usize = 1024*1024;
 const DOMAIN_SEPARATOR: &str = concat!("shake-entropy-v", env!("CARGO_PKG_VERSION"), "-domain-separator");
 
+use std::fmt::{Display, Formatter};
 use getrandom;
 use rand_core::{TryRng};
 use tiny_keccak::{Hasher, Shake, Xof};
 use crate::cpu_entropy;
 use zeroize::Zeroize;
+use crate::entropy::EntropyError::OsEntropyFailed;
 
+#[cfg_attr(test, derive(Clone))]
 pub struct HardwareEntropyPool{
     state: tiny_keccak::Shake,
     counter: usize,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EntropyError{
+    OsEntropyFailed,
+    ReseedFailed,
+    UnsupportedHardware,
+}
+
+impl Display for EntropyError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self{
+            EntropyError::OsEntropyFailed => write!(f, "OsEntropy failed"),
+            EntropyError::ReseedFailed => write!(f, "Reseed failed"),
+            EntropyError::UnsupportedHardware => write!(f, "Unsupported hardware"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for EntropyError {}
 
 impl Default for HardwareEntropyPool {
     fn default() -> Self {
@@ -101,10 +124,14 @@ impl HardwareEntropyPool {
         self.counter
     }
 
+    pub fn fill_bytes(&mut self, dst: &mut [u8]) {
+        self.try_fill_bytes(dst).expect("Failed to fill bytes");
+    }
+
 }
 
 impl rand_core::TryRng for HardwareEntropyPool{
-    type Error = core::convert::Infallible;
+    type Error = EntropyError;
 
     /// An attempt to create next u32
     fn try_next_u32(&mut self) -> Result<u32,Self::Error> {
@@ -128,7 +155,7 @@ impl rand_core::TryRng for HardwareEntropyPool{
         if self.counter > RESEED_THRESHOLD {
             let reseed_success = (0..20).any(|_| self.reseed().is_ok());
             if !reseed_success {
-                panic!("Fatal error: OS entropy reseed failed after 20 attempts!");
+                return Err(OsEntropyFailed);
             };
         };
 
@@ -142,10 +169,10 @@ impl rand_core::TryCryptoRng for HardwareEntropyPool {}
 
 /// Fills a destination with bytes.
 /// If you need to generate a lot of data use [`HardwareEntropyPool`] instead
-pub fn fill_random_bytes<S>(dest: &mut S)
+pub fn fill_random_bytes<S>(dest: &mut S) -> Result<(), EntropyError>
 where
     S: ?Sized + AsMut<[u8]>,
 {
-    let mut pool = HardwareEntropyPool::new();
-    let _ = pool.try_fill_bytes(dest.as_mut());
+    let mut pool = HardwareEntropyPool::try_new().map_err(|_| OsEntropyFailed)?;
+    pool.try_fill_bytes(dest.as_mut())
 }
