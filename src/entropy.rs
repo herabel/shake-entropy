@@ -96,6 +96,11 @@ impl HardwareEntropyPool {
 
         Ok(())
     }
+
+    pub fn counter(&self) -> usize {
+        self.counter
+    }
+
 }
 
 impl rand_core::TryRng for HardwareEntropyPool{
