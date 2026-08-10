@@ -13,7 +13,7 @@
 const RESEED_THRESHOLD: usize = 1024*1024;
 const DOMAIN_SEPARATOR: &str = concat!("shake-entropy-v", env!("CARGO_PKG_VERSION"), "-domain-separator");
 
-use std::fmt::{Display, Formatter};
+use core::fmt::{Display, Formatter};
 use getrandom;
 use rand_core::{TryRng};
 use tiny_keccak::{Hasher, Shake, Xof};
