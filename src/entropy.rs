@@ -11,6 +11,7 @@
 //! the necessary features (`rdrand`, `rdseed` via [`cpu_entropy`]) before deployment.
 
 const RESEED_THRESHOLD: usize = 1024*1024;
+const DOMAIN_SEPARATOR: &str = concat!("shake-entropy-v", env!("CARGO_PKG_VERSION"), "-domain-separator");
 
 use getrandom;
 use rand_core::{TryRng};
@@ -34,7 +35,7 @@ impl HardwareEntropyPool {
     pub fn try_new() -> Result<HardwareEntropyPool, getrandom::Error> {
 
         let mut hasher= Shake::v256();
-        hasher.update(b"shake-entropy-v0.1-domain-separator");
+        hasher.update(DOMAIN_SEPARATOR.as_ref());
 
         let mut os_buf = [0u8; 64];
         getrandom::fill(&mut os_buf)?;
@@ -64,7 +65,7 @@ impl HardwareEntropyPool {
     pub fn reseed(&mut self) -> Result<(), getrandom::Error> {
         let mut new_hasher = Shake::v256();
 
-        new_hasher.update(b"shake-entropy-v0.1-domain-separator");
+        new_hasher.update(DOMAIN_SEPARATOR.as_ref());
 
         let mut old_seed = [0u8; 32];
         self.state.squeeze(&mut old_seed);
