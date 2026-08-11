@@ -25,6 +25,7 @@ use crate::entropy::EntropyError::{ByteEntropyFailed, OsEntropyFailed, ReseedFai
 pub struct HardwareEntropyPool{
     state: Shake,
     counter: usize,
+    calls_counter: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -80,7 +81,7 @@ impl HardwareEntropyPool {
 
         os_buf.zeroize();
 
-        Ok ( Self { state: (hasher), counter: (0) } )
+        Ok ( Self { state: hasher, counter: 0, calls_counter: 0} )
     }
 
     pub fn new() -> Self {
@@ -154,7 +155,7 @@ impl TryRng for HardwareEntropyPool{
 
     /// An attempt to fill destination with u8 slice
     fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
-        if self.counter > RESEED_THRESHOLD {
+        if self.counter > RESEED_THRESHOLD || self.calls_counter > 10000 {
             let reseed_success = (0..20).any(|_| self.reseed().is_ok());
             if !reseed_success {
                 return Err(OsEntropyFailed);
@@ -163,6 +164,7 @@ impl TryRng for HardwareEntropyPool{
 
         self.state.squeeze(dst);
         self.counter += dst.len();
+        self.calls_counter += 1;
         Ok(())
     }
 }
