@@ -79,6 +79,10 @@ impl HardwareEntropyPool {
 
         hasher.update(&os_buf);
 
+        if let Some(mut cycles) = cpu_entropy::get_rdtsc(){
+            hasher.update(&cycles.to_le_bytes());
+            cycles.zeroize();
+        }
         os_buf.zeroize();
 
         Ok ( Self { state: hasher, counter: 0, calls_counter: 0} )
@@ -114,6 +118,11 @@ impl HardwareEntropyPool {
         };
 
         new_hasher.update(&os_buf);
+
+        if let Some(mut cycles) = cpu_entropy::get_rdtsc(){
+            new_hasher.update(&cycles.to_le_bytes());
+            cycles.zeroize();
+        }
 
         os_buf.zeroize();
 
