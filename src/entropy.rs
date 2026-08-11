@@ -168,7 +168,7 @@ impl TryRng for HardwareEntropyPool{
         if self.counter > RESEED_THRESHOLD || self.calls_counter > 10000 {
             let reseed_success = (0..20).any(|_| self.reseed().is_ok());
             if !reseed_success {
-                return Err(OsEntropyFailed);
+                return Err(ReseedFailed);
             };
         };
 
