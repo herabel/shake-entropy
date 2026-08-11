@@ -19,7 +19,7 @@ use rand_core::{TryRng};
 use tiny_keccak::{Hasher, Shake, Xof};
 use crate::cpu_entropy;
 use zeroize::Zeroize;
-use crate::entropy::EntropyError::OsEntropyFailed;
+use crate::entropy::EntropyError::{ByteEntropyFailed, OsEntropyFailed, ReseedFailed};
 
 #[cfg_attr(test, derive(Clone))]
 pub struct HardwareEntropyPool{
