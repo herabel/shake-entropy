@@ -59,7 +59,6 @@ pub fn try_rdseed() -> Option<u64> {
 ///
 /// Returns `None` if the operation status is 0 or the feature is unsupported by the CPU.
 #[cfg(target_arch = "x86_64")]
-
 pub fn try_rdrand() -> Option<u64> {
     #[cfg(feature = "std")]
     if is_x86_feature_detected!("rdrand") {
