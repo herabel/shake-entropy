@@ -128,6 +128,7 @@ impl HardwareEntropyPool {
 
         self.state = new_hasher;
         self.counter = 0;
+        self.calls_counter = 0;
 
         Ok(())
     }
