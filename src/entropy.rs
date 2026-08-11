@@ -19,12 +19,13 @@ use rand_core::{TryRng};
 use tiny_keccak::{Hasher, Shake, Xof};
 use crate::cpu_entropy;
 use zeroize::Zeroize;
-use crate::entropy::EntropyError::OsEntropyFailed;
+use crate::entropy::EntropyError::{ByteEntropyFailed, OsEntropyFailed, ReseedFailed};
 
 #[cfg_attr(test, derive(Clone))]
 pub struct HardwareEntropyPool{
-    state: tiny_keccak::Shake,
+    state: Shake,
     counter: usize,
+    calls_counter: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,14 +33,16 @@ pub enum EntropyError{
     OsEntropyFailed,
     ReseedFailed,
     UnsupportedHardware,
+    ByteEntropyFailed,
 }
 
 impl Display for EntropyError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self{
-            EntropyError::OsEntropyFailed => write!(f, "OsEntropy failed"),
-            EntropyError::ReseedFailed => write!(f, "Reseed failed"),
+            OsEntropyFailed => write!(f, "OsEntropy failed"),
+            ReseedFailed => write!(f, "Reseed failed"),
             EntropyError::UnsupportedHardware => write!(f, "Unsupported hardware"),
+            ByteEntropyFailed => write!(f, "Byte entropy failed"),
         }
     }
 }
@@ -76,16 +79,20 @@ impl HardwareEntropyPool {
 
         hasher.update(&os_buf);
 
+        if let Some(mut cycles) = cpu_entropy::get_rdtsc(){
+            hasher.update(&cycles.to_le_bytes());
+            cycles.zeroize();
+        }
         os_buf.zeroize();
 
-        Ok ( Self { state: (hasher), counter: (0) } )
+        Ok ( Self { state: hasher, counter: 0, calls_counter: 0} )
     }
 
     pub fn new() -> Self {
         Self::try_new().expect("Failed to initialize OS entropy source")
     }
 
-    pub fn reseed(&mut self) -> Result<(), getrandom::Error> {
+    pub fn reseed(&mut self) -> Result<(), EntropyError> {
         let mut new_hasher = Shake::v256();
 
         new_hasher.update(DOMAIN_SEPARATOR.as_ref());
@@ -97,7 +104,7 @@ impl HardwareEntropyPool {
         old_seed.zeroize();
 
         let mut os_buf = [0u8; 64];
-        getrandom::fill(&mut os_buf)?;
+        getrandom::fill(&mut os_buf).map_err(|_| ReseedFailed)?;
 
         if let Some(mut hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
             new_hasher.update(&hard_random_number_rdrand.to_le_bytes());
@@ -111,6 +118,11 @@ impl HardwareEntropyPool {
         };
 
         new_hasher.update(&os_buf);
+
+        if let Some(mut cycles) = cpu_entropy::get_rdtsc(){
+            new_hasher.update(&cycles.to_le_bytes());
+            cycles.zeroize();
+        }
 
         os_buf.zeroize();
 
@@ -130,13 +142,13 @@ impl HardwareEntropyPool {
 
 }
 
-impl rand_core::TryRng for HardwareEntropyPool{
+impl TryRng for HardwareEntropyPool{
     type Error = EntropyError;
 
     /// An attempt to create next u32
     fn try_next_u32(&mut self) -> Result<u32,Self::Error> {
         let mut local_array = [0u8;4];
-        let _ = rand_core::TryRng::try_fill_bytes(self, &mut local_array);
+        TryRng::try_fill_bytes(self, &mut local_array).map_err(|_| ByteEntropyFailed)?;
         let output = u32::from_le_bytes(local_array);
         local_array.zeroize();
         Ok(output)
@@ -144,7 +156,7 @@ impl rand_core::TryRng for HardwareEntropyPool{
     /// An attempt to create next u64
     fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
         let mut local_array = [0u8;8];
-        let _ = rand_core::TryRng::try_fill_bytes(self, &mut local_array);
+        TryRng::try_fill_bytes(self, &mut local_array).map_err(|_| ByteEntropyFailed)?;
         let output = u64::from_le_bytes(local_array);
         local_array.zeroize();
         Ok(output)
@@ -152,7 +164,7 @@ impl rand_core::TryRng for HardwareEntropyPool{
 
     /// An attempt to fill destination with u8 slice
     fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Self::Error> {
-        if self.counter > RESEED_THRESHOLD {
+        if self.counter > RESEED_THRESHOLD || self.calls_counter > 10000 {
             let reseed_success = (0..20).any(|_| self.reseed().is_ok());
             if !reseed_success {
                 return Err(OsEntropyFailed);
@@ -161,6 +173,7 @@ impl rand_core::TryRng for HardwareEntropyPool{
 
         self.state.squeeze(dst);
         self.counter += dst.len();
+        self.calls_counter += 1;
         Ok(())
     }
 }
