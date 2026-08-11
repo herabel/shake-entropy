@@ -23,7 +23,7 @@ use crate::entropy::EntropyError::OsEntropyFailed;
 
 #[cfg_attr(test, derive(Clone))]
 pub struct HardwareEntropyPool{
-    state: tiny_keccak::Shake,
+    state: Shake,
     counter: usize,
 }
 
@@ -37,8 +37,8 @@ pub enum EntropyError{
 impl Display for EntropyError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self{
-            EntropyError::OsEntropyFailed => write!(f, "OsEntropy failed"),
-            EntropyError::ReseedFailed => write!(f, "Reseed failed"),
+            OsEntropyFailed => write!(f, "OsEntropy failed"),
+            ReseedFailed => write!(f, "Reseed failed"),
             EntropyError::UnsupportedHardware => write!(f, "Unsupported hardware"),
         }
     }
@@ -130,13 +130,13 @@ impl HardwareEntropyPool {
 
 }
 
-impl rand_core::TryRng for HardwareEntropyPool{
+impl TryRng for HardwareEntropyPool{
     type Error = EntropyError;
 
     /// An attempt to create next u32
     fn try_next_u32(&mut self) -> Result<u32,Self::Error> {
         let mut local_array = [0u8;4];
-        let _ = rand_core::TryRng::try_fill_bytes(self, &mut local_array);
+        TryRng::try_fill_bytes(self, &mut local_array).map_err(|_| ByteEntropyFailed)?;
         let output = u32::from_le_bytes(local_array);
         local_array.zeroize();
         Ok(output)
