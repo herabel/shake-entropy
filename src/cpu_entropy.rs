@@ -100,3 +100,16 @@ pub fn try_rdseed() -> Option<u64> {
 pub fn try_rdrand() -> Option<u64> {
     None
 }
+
+pub fn get_rdtsc() -> Option<u64> {
+    #[cfg(target_arch = "x86_64")]
+    {
+        return Some(unsafe { core::arch::x86_64::_rdtsc() });
+    }
+    #[cfg(target_arch = "x86")]
+    {
+        return Some(unsafe { core::arch::x86::_rdtsc() });
+    }
+    #[allow(unreachable_code)]
+    None
+}
