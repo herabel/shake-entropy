@@ -11,7 +11,7 @@ Even if 2 out of the 3 entropy sources are compromised, degraded, or malfunction
 Add `shake-entropy` to your `Cargo.toml`:
 ```toml
 [dependencies]
-shake-entropy = "0.1.11"
+shake-entropy = "0.1.12"
 ```
 ### Quick Example
 ```rust
