@@ -87,7 +87,7 @@ impl HardwareEntropyPool {
         Self::try_new().expect("Failed to initialize OS entropy source")
     }
 
-    pub fn reseed(&mut self) -> Result<(), getrandom::Error> {
+    pub fn reseed(&mut self) -> Result<(), EntropyError> {
         let mut new_hasher = Shake::v256();
 
         new_hasher.update(DOMAIN_SEPARATOR.as_ref());
@@ -99,7 +99,7 @@ impl HardwareEntropyPool {
         old_seed.zeroize();
 
         let mut os_buf = [0u8; 64];
-        getrandom::fill(&mut os_buf)?;
+        getrandom::fill(&mut os_buf).map_err(|_| ReseedFailed)?;
 
         if let Some(mut hard_random_number_rdrand)  = cpu_entropy::gen_rdrand(50){
             new_hasher.update(&hard_random_number_rdrand.to_le_bytes());
@@ -146,7 +146,7 @@ impl TryRng for HardwareEntropyPool{
     /// An attempt to create next u64
     fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
         let mut local_array = [0u8;8];
-        let _ = rand_core::TryRng::try_fill_bytes(self, &mut local_array);
+        TryRng::try_fill_bytes(self, &mut local_array).map_err(|_| ByteEntropyFailed)?;
         let output = u64::from_le_bytes(local_array);
         local_array.zeroize();
         Ok(output)
