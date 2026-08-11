@@ -32,6 +32,7 @@ pub enum EntropyError{
     OsEntropyFailed,
     ReseedFailed,
     UnsupportedHardware,
+    ByteEntropyFailed,
 }
 
 impl Display for EntropyError {
@@ -40,6 +41,7 @@ impl Display for EntropyError {
             OsEntropyFailed => write!(f, "OsEntropy failed"),
             ReseedFailed => write!(f, "Reseed failed"),
             EntropyError::UnsupportedHardware => write!(f, "Unsupported hardware"),
+            ByteEntropyFailed => write!(f, "Byte entropy failed"),
         }
     }
 }
