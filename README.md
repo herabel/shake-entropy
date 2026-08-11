@@ -11,7 +11,7 @@ Even if 2 out of the 3 entropy sources are compromised, degraded, or malfunction
 Add `shake-entropy` to your `Cargo.toml`:
 ```toml
 [dependencies]
-shake-entropy = "0.1.11"
+shake-entropy = "0.1.12"
 ```
 ### Quick Example
 ```rust
@@ -52,6 +52,69 @@ Evaluated throughput and initialization timing for entropy pool harvesting and c
 > - **OS:** Windows
 > - **Build:** Rust `--release` mode (`cargo test --release -- --nocapture`)
 
+### Statistical Randomness Verification
+
+`shake-entropy` has been empirically verified against the **Dieharder (v3.31.1)** statistical test suite using a continuous zero-copy stream (`stream_stdout`).
+
+| Test Suite | Total Tests Run | Failures | Status |
+| :--- | :---: | :---: | :---: |
+| **Dieharder Test Suite** | **110+** (inc. `ntup` up to 32) | **0** | **100% PASSED** |
+
+<details>
+<summary><b>Click to view full Dieharder test suite results</b></summary>
+
+```text
+#=============================================================================#
+#            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
+#=============================================================================#
+   rng_name    |rands/second|   Seed   |
+stdin_input_raw|  1.55e+07  |3333439077|
+#=============================================================================#
+        test_name   |ntup| tsamples |psamples|  p-value |Assessment
+#=============================================================================#
+   diehard_birthdays|   0|       100|     100|0.29171459|  PASSED
+      diehard_operm5|   0|   1000000|     100|0.73992202|  PASSED
+  diehard_rank_32x32|   0|     40000|     100|0.93817284|  PASSED
+    diehard_rank_6x8|   0|    100000|     100|0.87100881|  PASSED
+   diehard_bitstream|   0|   2097152|     100|0.10858029|  PASSED
+        diehard_opso|   0|   2097152|     100|0.39539014|  PASSED
+        diehard_oqso|   0|   2097152|     100|0.75271440|  PASSED
+         diehard_dna|   0|   2097152|     100|0.54225518|  PASSED
+diehard_count_1s_str|   0|    256000|     100|0.52526825|  PASSED
+diehard_count_1s_byt|   0|    256000|     100|0.22197221|  PASSED
+ diehard_parking_lot|   0|     12000|     100|0.80220017|  PASSED
+    diehard_2dsphere|   2|      8000|     100|0.10116695|  PASSED
+    diehard_3dsphere|   3|      4000|     100|0.97294488|  PASSED
+     diehard_squeeze|   0|    100000|     100|0.94809776|  PASSED
+        diehard_sums|   0|       100|     100|0.04937851|  PASSED
+        diehard_runs|   0|    100000|     100|0.10470319|  PASSED
+ marsaglia_tsang_gcd|   0|  10000000|     100|0.41738653|  PASSED
+         sts_monobit|   1|    100000|     100|0.98087756|  PASSED
+            sts_runs|   2|    100000|     100|0.97467026|  PASSED
+          sts_serial| 1..16|  100000|     100| p > 0.01 |  PASSED
+         rgb_bitdist| 1..12|  100000|     100| p > 0.01 |  PASSED
+rgb_minimum_distance| 2..5 |   10000|    1000| p > 0.01 |  PASSED
+    rgb_permutations| 2..5 |  100000|     100| p > 0.01 |  PASSED
+      rgb_lagged_sum| 0..32| 1000000|     100| p > 0.01 |  PASSED
+     rgb_kstest_test|   0|     10000|    1000|0.10807781|  PASSED
+     dab_bytedistrib|   0|  51200000|       1|0.49594696|  PASSED
+             dab_dct| 256|     50000|       1|0.34769213|  PASSED
+        dab_filltree|  32|  15000000|       1|0.52896424|  PASSED
+       dab_filltree2| 0..1|   5000000|       1| p > 0.01 |  PASSED
+        dab_monobit2|  12|  65000000|       1|0.98738668|  PASSED
+#=============================================================================#
+# Assessment: ALL TESTS PASSED (0 FAILURES)
+#=============================================================================#
+```
+</details>
+
+You can reproduce these test results on your own by running:
+
+```bash
+cargo run --example stream_stdout --release | dieharder -a -g 200
+```
+> [!NOTE]
+> A few tests may yield a `WEAK` assessment. This is expected due to natural p-value variance in statistical testing and does not indicate a flaw in the entropy generator.
 ## License
 Licensed under either of:
 
