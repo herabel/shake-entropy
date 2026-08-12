@@ -32,11 +32,7 @@ pub fn try_rdseed() -> Option<u64> {
         unsafe {
             let mut val: u64 = 0;
             let status: i32 = core::arch::x86_64::_rdseed64_step(&mut val);
-            if status == 1 {
-                Some(val)
-            } else {
-                None
-            }
+            if status == 1 { Some(val) } else { None }
         }
     } else {
         None
@@ -52,7 +48,8 @@ pub fn try_rdseed() -> Option<u64> {
             } else {
                 None
             }
-    }}
+        }
+    }
 }
 
 /// Queries the hardware `RDRAND` processor register.
@@ -65,11 +62,7 @@ pub fn try_rdrand() -> Option<u64> {
         unsafe {
             let mut val: u64 = 0;
             let status: i32 = core::arch::x86_64::_rdrand64_step(&mut val);
-            if status == 1 {
-                Some(val)
-            } else {
-                None
-            }
+            if status == 1 { Some(val) } else { None }
         }
     } else {
         None

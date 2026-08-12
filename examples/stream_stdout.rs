@@ -1,5 +1,5 @@
 use shake_entropy::HardwareEntropyPool;
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 fn main() {
     let mut pool = HardwareEntropyPool::new();
     let mut buffer = [0u8; 64 * 1024];
